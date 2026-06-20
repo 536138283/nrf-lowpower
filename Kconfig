@@ -1,0 +1,44 @@
+mainmenu "nRF52832 low-power timed advertiser"
+
+source "Kconfig.zephyr"
+
+# Application configuration for the low-power timed BLE advertiser.
+
+menu "Low-power timed advertiser"
+
+config APP_ADV_PERIOD_MS
+	int "Milliseconds between advertising bursts"
+	default 60000
+	help
+	  Total period of the advertise/sleep cycle. The device advertises for
+	  APP_ADV_ON_TIME_MS and then keeps the controller idle until the next cycle.
+
+config APP_ADV_ON_TIME_MS
+	int "Milliseconds to keep each advertising burst enabled"
+	default 1000
+	help
+	  Duration of each non-connectable advertising burst.
+
+config APP_ADV_INTERVAL_MS
+	int "Legacy advertising interval in milliseconds while enabled"
+	default 100
+	range 20 10240
+	help
+	  Advertising interval used during a burst. Shorter values improve discovery
+	  latency and increase peak radio energy. Longer values reduce radio energy.
+
+config APP_COMPANY_ID
+	hex "Bluetooth SIG company identifier used in manufacturer data"
+	default 0xFFFF
+	help
+	  Replace 0xFFFF with your assigned Bluetooth SIG company identifier for
+	  production products.
+
+config APP_PAYLOAD_MAGIC
+	hex "Two-byte product marker in manufacturer data"
+	default 0x4C50
+	help
+	  Product marker encoded after the company identifier. Default is ASCII 'LP'
+	  in little-endian order.
+
+endmenu
