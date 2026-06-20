@@ -5,7 +5,7 @@
 建议使用以下环境：
 
 - Nordic nRF5 SDK 17.1.0。
-- S132 SoftDevice v7.x。
+- S132 SoftDevice v7.x；本项目使用 Broadcaster / non-connectable Legacy Advertising。
 - GNU Arm Embedded Toolchain，支持 Cortex-M4F hard-float。
 - nRF Command Line Tools，提供 `nrfjprog`。
 - 目标板：PCA10040 / nRF52 DK，或等价 nRF52832 自研板。

@@ -22,7 +22,7 @@
 
 #define DEVICE_NAME                     "nRF52-LP-ADV"
 #define APP_BLE_CONN_CFG_TAG            1
-#define APP_BLE_OBSERVER_PRIO           3
+#define APP_ADV_TX_POWER_DBM            4
 
 #define ADV_INTERVAL_MS                 100U
 #define ADV_ON_TIME_MS                  1000U
@@ -112,8 +112,18 @@ static void advertising_payload_update(void)
     adv_params.interval        = ADV_INTERVAL_UNITS;
     adv_params.duration        = 0;
     adv_params.primary_phy     = BLE_GAP_PHY_1MBPS;
+    adv_params.channel_mask[0] = 0x00; /* Use advertising channels 37, 38 and 39. */
+    adv_params.channel_mask[1] = 0x00;
+    adv_params.channel_mask[2] = 0x00;
+    adv_params.channel_mask[3] = 0x00;
+    adv_params.channel_mask[4] = 0x00;
 
     err_code = sd_ble_gap_adv_set_configure(&m_adv_handle, &m_gap_adv_data, &adv_params);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV,
+                                       m_adv_handle,
+                                       APP_ADV_TX_POWER_DBM);
     APP_ERROR_CHECK(err_code);
 }
 

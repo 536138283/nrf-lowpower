@@ -1,7 +1,7 @@
 # nRF52832 低功耗定时 BLE 广播
 
 本项目是一套基于 **Nordic nRF5 SDK + S132 SoftDevice** 的 nRF52832 低功耗 BLE 定时广播程序。
-设备只做周期性、不可连接、不可扫描的 Legacy Advertising，不开启 GATT 服务，也不接受连接；每次短时间广播后立即停止广播并回到 System ON 低功耗睡眠。
+设备工作在 BLE **Broadcaster** 模式，只做周期性、不可连接、不可扫描的 Legacy Advertising；三条主广播信道 37/38/39 全部启用，广播间隔 100 ms，不开启 GATT 服务，也不接受连接；每次短时间广播后立即停止广播并回到 System ON idle，由 RTC/LFCLK 唤醒下一次广播。
 
 ## 快速开始
 
@@ -25,8 +25,10 @@
 | 参数 | 默认值 | 位置 |
 | --- | --- | --- |
 | 设备名 | `nRF52-LP-ADV` | `src/main.c` |
-| 广播类型 | 不可连接、不可扫描、非定向广播 | `src/main.c` |
+| 广播角色/类型 | Broadcaster；不可连接、不可扫描、Legacy 非定向广播 | `src/main.c` |
 | 广播间隔 | 100 ms | `ADV_INTERVAL_MS` |
+| 广播信道 | 37/38/39 三通道 | `channel_mask` 全 0 |
+| 发射功率 | +4 dBm | `APP_ADV_TX_POWER_DBM` |
 | 单次广播时长 | 1 s | `ADV_ON_TIME_MS` |
 | 广播周期 | 60 s | `ADV_PERIOD_MS` |
 | Company ID | `0xFFFF`，仅开发占位 | `APP_COMPANY_IDENTIFIER` |
@@ -54,4 +56,5 @@
 - 将 `APP_COMPANY_IDENTIFIER` 从 `0xFFFF` 替换为你自己的 Bluetooth SIG Company Identifier。
 - 根据你的 S132 SoftDevice 版本确认 `nrf52832_xxaa.ld` 中的 Flash/RAM 起始地址。
 - 在真实硬件上使用 PPK2 或等效工具测量完整广播周期的平均电流。
-- 根据接收端扫描策略调整广播周期、广播时长和广播间隔。
+- 根据接收端扫描策略、通信距离和法规要求调整广播周期、广播时长、广播间隔和发射功率。
+- nRF52832 不支持 BLE Coded PHY；本项目的“远距离”支持方式是 1M PHY + 三通道广播 + 较高 TX power + 接收端扫描参数优化。

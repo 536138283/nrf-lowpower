@@ -2,15 +2,18 @@
 
 ## 广播类型
 
-程序使用 Legacy Advertising：
+程序工作在 BLE Broadcaster 模式，使用 Legacy Advertising：
 
 - `BLE_GAP_ADV_TYPE_NONCONNECTABLE_NONSCANNABLE_UNDIRECTED`
 - 不可连接。
 - 不可扫描。
 - 非定向。
+- 三条主广播信道 37/38/39 全部启用。
+- 广播间隔 100 ms。
 - 1 Mbps PHY。
+- TX power 默认 +4 dBm，用于提高覆盖距离。
 
-这种方式适合只上报状态、ID、计数器或传感器摘要的低功耗设备。
+这种方式适合只上报状态、ID、计数器或传感器摘要的低功耗设备。nRF52832/S132 不支持 BLE Coded PHY，若需要标准 BLE Long Range coded PHY，应选用支持 Coded PHY 的芯片；本项目通过三通道广播、100 ms 间隔和较高 TX power 改善实际覆盖距离。
 
 ## 广播字段
 
