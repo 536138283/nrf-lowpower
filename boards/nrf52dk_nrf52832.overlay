@@ -1,0 +1,21 @@
+/* Keep development-kit LEDs/buttons disconnected by default to avoid leakage paths
+ * from samples or board helper code. Remove these aliases if your application
+ * needs board GPIOs.
+ */
+/ {
+	aliases {
+		led0 = &disconnected_gpio;
+		led1 = &disconnected_gpio;
+		led2 = &disconnected_gpio;
+		led3 = &disconnected_gpio;
+		sw0 = &disconnected_gpio;
+		sw1 = &disconnected_gpio;
+		sw2 = &disconnected_gpio;
+		sw3 = &disconnected_gpio;
+	};
+
+	disconnected_gpio: disconnected-gpio {
+		compatible = "gpio-keys";
+		status = "disabled";
+	};
+};
