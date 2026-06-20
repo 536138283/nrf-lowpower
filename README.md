@@ -1,87 +1,57 @@
-# nRF52832 BLE Single Timed Advertiser Low-Power SDK App
+# nRF52832 低功耗定时 BLE 广播
 
-This project is a Nordic **nRF5 SDK + S132 SoftDevice** application for an
-nRF52832 that only performs timed, non-connectable BLE advertising. It is meant
-for products that periodically broadcast a small payload and then immediately
-return to System ON sleep.
+本项目是一套基于 **Nordic nRF5 SDK + S132 SoftDevice** 的 nRF52832 低功耗 BLE 定时广播程序。
+设备只做周期性、不可连接、不可扫描的 Legacy Advertising，不开启 GATT 服务，也不接受连接；每次短时间广播后立即停止广播并回到 System ON 低功耗睡眠。
 
-> Note: the requested reference document `nrf52832_ble_single_adv_low_power_sdk.md`
-> was not present in this checkout, so this implementation follows the nRF5 SDK
-> low-power pattern implied by that filename: SoftDevice + `app_timer` +
-> `nrf_pwr_mgmt_run()` + no UART/logging/services/connections.
+## 快速开始
 
-## Runtime behaviour
+1. 安装 Nordic nRF5 SDK 17.1.0、GNU Arm Embedded Toolchain 和 nRF Command Line Tools。
+2. 设置 SDK 路径并编译：
 
-Default cycle:
+   ```sh
+   make SDK_ROOT=/path/to/nRF5_SDK_17.1.0_ddde560
+   ```
 
-- Device name: `nRF52-LP-ADV`.
-- Advertising type: legacy, non-connectable, non-scannable undirected.
-- Advertising interval: 100 ms while the burst is active.
-- Advertising on-time: 1 second.
-- Sleep time: 59 seconds.
-- Repeat forever without opening connections or GATT services.
+3. 擦除芯片、烧录 S132 SoftDevice、烧录应用：
 
-The manufacturer data payload is 10 bytes:
+   ```sh
+   make SDK_ROOT=/path/to/nRF5_SDK_17.1.0_ddde560 erase
+   make SDK_ROOT=/path/to/nRF5_SDK_17.1.0_ddde560 flash_softdevice
+   make SDK_ROOT=/path/to/nRF5_SDK_17.1.0_ddde560 flash
+   ```
 
-| Bytes | Field |
-| --- | --- |
-| 0..1 | Bluetooth SIG company identifier, default `0xFFFF` development placeholder |
-| 2..3 | Product marker, default little-endian `LP` |
-| 4..7 | Little-endian boot-local advertising sequence |
-| 8..9 | Little-endian uptime seconds modulo 65536 |
+## 默认运行参数
 
-## Low-power design choices
+| 参数 | 默认值 | 位置 |
+| --- | --- | --- |
+| 设备名 | `nRF52-LP-ADV` | `src/main.c` |
+| 广播类型 | 不可连接、不可扫描、非定向广播 | `src/main.c` |
+| 广播间隔 | 100 ms | `ADV_INTERVAL_MS` |
+| 单次广播时长 | 1 s | `ADV_ON_TIME_MS` |
+| 广播周期 | 60 s | `ADV_PERIOD_MS` |
+| Company ID | `0xFFFF`，仅开发占位 | `APP_COMPANY_IDENTIFIER` |
 
-- Uses `app_timer`/RTC to schedule start and stop events instead of busy waits.
-- Calls `sd_ble_gap_adv_stop()` after every short burst to stop radio activity.
-- Sleeps in the main loop with `nrf_pwr_mgmt_run()`.
-- Enables the nRF52 DC/DC converter with `sd_power_dcdc_mode_set()`.
-- Configures all GPIOs to the default disconnected state at boot.
-- Disables RTT/UART logging and unused serial/peripheral drivers in `sdk_config.h`.
-- Sets SoftDevice link counts to zero because this application never connects.
+## 文档目录
 
-## Build
+- [架构说明](docs/architecture.md)：程序模块、启动流程、广播启停流程。
+- [构建与烧录](docs/build_and_flash.md)：工具链、SDK 路径、SoftDevice、Makefile 目标和内存布局。
+- [广播数据格式](docs/advertising_payload.md)：广播包字段和 manufacturer data 结构。
+- [低功耗调优与测试](docs/low_power_tuning.md)：功耗设计点、参数调优方向和电流测试 checklist。
 
-Install Nordic nRF5 SDK 17.1.0 and GNU Arm Embedded Toolchain, then build with:
+## 代码结构
 
-```sh
-make SDK_ROOT=/path/to/nRF5_SDK_17.1.0_ddde560
+```text
+.
+├── Makefile              # nRF5 SDK GCC 构建和烧录入口
+├── nrf52832_xxaa.ld      # S132 v7.x 应用链接脚本
+├── sdk_config.h          # nRF5 SDK 模块与低功耗配置
+├── src/main.c            # 定时广播主程序
+└── docs/                 # 项目说明文档
 ```
 
-Flash the SoftDevice and application:
+## 生产前必须确认
 
-```sh
-make SDK_ROOT=/path/to/nRF5_SDK_17.1.0_ddde560 erase
-make SDK_ROOT=/path/to/nRF5_SDK_17.1.0_ddde560 flash_softdevice
-make SDK_ROOT=/path/to/nRF5_SDK_17.1.0_ddde560 flash
-```
-
-The linker script assumes S132 v7.x with application flash starting at
-`0x26000`. If your SoftDevice version differs, update `nrf52832_xxaa.ld` using
-Nordic's memory placement values for that SoftDevice.
-
-## Tuning
-
-Edit these constants in `src/main.c` for your product:
-
-```c
-#define ADV_INTERVAL_MS        100U
-#define ADV_ON_TIME_MS         1000U
-#define ADV_PERIOD_MS          60000U
-#define APP_COMPANY_IDENTIFIER 0xFFFFU
-```
-
-Lower average current generally comes from increasing `ADV_PERIOD_MS`, reducing
-`ADV_ON_TIME_MS`, and increasing `ADV_INTERVAL_MS`. Discovery latency moves in
-the opposite direction, so validate final values with the real receiver.
-
-## Measurement checklist
-
-- Use your assigned Bluetooth SIG company identifier before production.
-- Remove debugger, LEDs, pull-ups, sensor rails, and USB interface leakage when
-  measuring current.
-- Confirm the PCB supports DCDC mode before relying on the DCDC current numbers.
-- Compare RC LFCLK vs a 32.768 kHz crystal on your hardware; crystal accuracy can
-  reduce calibration overhead, while RC reduces BOM.
-- Measure with Nordic PPK2 or an equivalent current profiler over multiple full
-  advertising periods, not only during the 1-second radio burst.
+- 将 `APP_COMPANY_IDENTIFIER` 从 `0xFFFF` 替换为你自己的 Bluetooth SIG Company Identifier。
+- 根据你的 S132 SoftDevice 版本确认 `nrf52832_xxaa.ld` 中的 Flash/RAM 起始地址。
+- 在真实硬件上使用 PPK2 或等效工具测量完整广播周期的平均电流。
+- 根据接收端扫描策略调整广播周期、广播时长和广播间隔。
